@@ -52,16 +52,31 @@ define(['config', 'utils'], function (Config, Utils) {
         Only process events from <input> elements
       */
       if (event.srcElement.nodeName === 'INPUT' && event.type === 'input') {
-        //process event
-        //from event, get the <input> element responsible for firing the input
-        //event
+        // $element is the <input> element responsible for firing the input event
         $element = event.srcElement;
-        console.log('Event fired by ' + Utils.getID($element));
-        console.log(Utils.getValue($element));
 
-        //perform validation here
-        //using Utils.getID(), perform lookup on this.elements for validation
-        //rules to be checked
+        var rules = this.elements[Utils.getID($element)];
+        if (!Array.isArray(rules)) {
+          // Do nothing if there are no rules defined for the input element
+          console.log('No rules defined for this input element');
+          return;
+        }
+
+        var inputValue = Utils.getValue($element);
+        // Validate against all the rules
+        for (var i = 0; i < rules.length; i++) {
+          var regExp = regex[rules[i].type];
+          if (typeof regExp !== 'undefined') {
+            if (regExp.test(inputValue)) {
+              // Todo: handle valid input
+              console.log('Valid');
+            } else {
+              // Todo: handle invalid input
+              console.log('Invalid');
+              break;
+            }
+          }
+        }
 
       } else {
         console.log('Invalid event');
