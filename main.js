@@ -7,7 +7,12 @@ define(['vladinator'], function (Vlad) {
   var vlad = new Vlad({
     el: 'form1',
     elements: {
-
+      phoneNumber: [
+        {type: 'phone', message: 'Enter a valid phone number'}
+      ],
+      email: [
+        {type: 'email', message: 'Enter a valid email address'}
+      ]
     }
 
   });
