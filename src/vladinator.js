@@ -65,7 +65,7 @@ define(['config', 'utils'], function (Config, Utils) {
         var inputValue = Utils.getValue($element);
         // Validate against all the rules
         for (var i = 0; i < rules.length; i++) {
-          var regExp = regex[rules[i].type];
+          var regExp = getRegExp(rules[i]);
           if (typeof regExp !== 'undefined') {
             if (regExp.test(inputValue)) {
               // Todo: handle valid input
@@ -81,6 +81,14 @@ define(['config', 'utils'], function (Config, Utils) {
       } else {
         console.log('Invalid event');
         return;
+      }
+
+      function getRegExp(rule) {
+        // 'rule' is a user-defined object with properties 'type', 'message', and optionally 'regex'
+        if (typeof rule.regex !== 'undefined') {
+          return rule.regex;
+        }
+        return regex[rule.type];
       }
     },
 
