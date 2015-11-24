@@ -5,7 +5,10 @@ require.config({
 define(['vladinator'], function (Vlad) {
 
   var vlad = new Vlad({
-    el: 'form1'
+    el: 'form1',
+    elements: {
+
+    }
 
   });
 

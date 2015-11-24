@@ -10,8 +10,16 @@ define(['config'], function (Config) {
     placeholder.innerHTML = errMessage;
   }
 
+  function getID($element) {
+    return $element.id;
+  }
+
   function getValue ($target) {
     return $target.value;
+  }
+
+  function turnToArray (nodeList) {
+    return Array.prototype.slice.call(nodeList);
   }
 
   return {
@@ -20,6 +28,12 @@ define(['config'], function (Config) {
     },
     getValue: function ($target) {
       return getValue($target);
+    },
+    getID: function ($element) {
+      return getID($element);
+    },
+    turnToArray: function (nodeList) {
+      return turnToArray(nodeList);
     }
   };
 });
