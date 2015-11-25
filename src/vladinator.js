@@ -47,45 +47,61 @@ define(['config', 'utils'], function (Config, Utils) {
 
     handleEvent: function (event) {
       console.log(event);
+      var self = this;
       var $element;
-      /*
-        Only process events from <input> elements
-      */
-      if (event.srcElement.nodeName === 'INPUT' && event.type === 'input') {
-        // $element is the <input> element responsible for firing the input event
-        $element = event.srcElement;
 
-        var rules = this.elements[Utils.getID($element)];
-        if (!Array.isArray(rules)) {
-          // Do nothing if there are no rules defined for the input element
-          console.log('No rules defined for this input element');
-          return;
-        }
-
-        var inputValue = Utils.getValue($element);
-        // Validate against all the rules
-        for (var i = 0; i < rules.length; i++) {
-          var regExp = getRegExp(rules[i]);
-          if (typeof regExp !== 'undefined') {
-            if (regExp.test(inputValue)) {
-              // Todo: handle valid input
-              console.log('Valid');
-            } else {
-              // Todo: handle invalid input
-              console.log('Invalid');
-              break;
-            }
-          }
-        }
-
-      } else {
+      // Only process events from <input> elements
+      if (event.srcElement.nodeName !== 'INPUT' || event.type !== 'input') {
         console.log('Invalid event');
         return;
       }
 
+      // $element is the <input> element responsible for firing the input event
+      $element = event.srcElement;
+      var rules = this.elements[Utils.getID($element)];
+
+      // Do nothing if there are no rules defined for the input element
+      if (!Array.isArray(rules)) {
+        console.log('No rules defined for this input element');
+        return;
+      }
+
+      var inputValue = Utils.getValue($element);
+      // Validate against all the rules
+      for (var i = 0; i < rules.length; i++) {
+        var isValid = checkIfValid(inputValue, rules[i]);
+        if (isValid) {
+          console.log('Valid!');
+        }
+        else {
+          console.log('Invalid with message: ' + rules[i].message);
+        }
+      }
+
+      /**
+       * 'rule' is a user-defined object that specifies the rules for a given input element. it can follow 2 forms:
+       *    1. an object with properties 'type', 'message', and optionally 'regex'
+       *    2. an object with properties 'mustMatch' and 'message'
+       */
+      function checkIfValid(inputValue, rule) {
+        if (typeof rule.mustMatch === 'string') {
+          // Check if value actually matches
+          var otherElement = self.el.querySelector('#' + rule.mustMatch);
+          var otherElementValue = Utils.getValue(otherElement);
+          return (inputValue === otherElementValue);
+        }
+
+        var regExp = getRegExp(rule);
+        if (typeof regExp === 'undefined') {
+          return false;
+        }
+
+        return regExp.test(inputValue);
+      }
+
       function getRegExp(rule) {
-        // 'rule' is a user-defined object with properties 'type', 'message', and optionally 'regex'
         if (typeof rule.regex !== 'undefined') {
+          // User-defined regex exists
           return rule.regex;
         }
         return regex[rule.type];
