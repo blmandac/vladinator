@@ -14,7 +14,8 @@ define(['config', 'utils'], function (Config, Utils) {
     mastercard: /^5[1-5][0-9]{14}$/,
     lettersonly: /^[a-zA-Z ]+$/,
     password: /(([A-Z]+)|[0-9])/ //change this.
-  };
+  },
+  _this;
 
 
   function Vladinator (options) {
@@ -25,18 +26,55 @@ define(['config', 'utils'], function (Config, Utils) {
 
     //Describes the overall state of input fields in options.el
     this.formState = false; //default
-
+    _this = this;
   }
 
+  //static functions
+  function getRegExp(rule) {
+
+    if ( rule.hasOwnProperty('regex')) {
+      // User-defined regex exists
+      return rule.regex;
+    }
+    return regex[rule.type];
+  }
+
+  /**
+   * 'rule' is a user-defined object that specifies the rules for a given input element. it can follow 2 forms:
+   *    1. an object with properties 'type', 'message', and optionally 'regex'
+   *    2. an object with properties 'mustMatch' and 'message'
+   */
+  function checkIfValid(inputValue, rule) {
+    var otherElement,
+        otherElementValue,
+        regExp;
+
+    if (rule.hasOwnProperty('mustMatch') && typeof rule.mustMatch === 'string') {
+      // Check if value actually matches
+      otherElement = _this.el.querySelector('#' + rule.mustMatch);
+      otherElementValue = Utils.getValue(otherElement);
+
+      return (inputValue === otherElementValue);
+
+    }
+
+    regExp = getRegExp(rule);
+
+    if (typeof regExp === 'undefined') {
+      return false;
+    }
+
+    return regExp.test(inputValue);
+  }
 
   Vladinator.prototype = {
     initialize: function () {
 
-      this.el = document.getElementById(this.selector);
-      this.el.addEventListener('input', this.handleEvent.bind(this), true);
+      _this.el = document.getElementById(this.selector);
+      _this.el.addEventListener('input', this.handleEvent, true);
 
       //add error msg placeholders to each input element within el
-      Utils.turnToArray(this.el.querySelectorAll('input'))
+      Utils.turnToArray(_this.el.querySelectorAll('input'))
         .forEach(function (input) {
           console.log(input);
             Utils.buildErrPlaceholder(input);
@@ -47,8 +85,10 @@ define(['config', 'utils'], function (Config, Utils) {
 
     handleEvent: function (event) {
       console.log(event);
-      var self = this;
-      var $element;
+      var $element,
+          rules,
+          inputValue,
+          isValid;
 
       // Only process events from <input> elements
       if (event.srcElement.nodeName !== 'INPUT' || event.type !== 'input') {
@@ -58,7 +98,7 @@ define(['config', 'utils'], function (Config, Utils) {
 
       // $element is the <input> element responsible for firing the input event
       $element = event.srcElement;
-      var rules = this.elements[Utils.getID($element)];
+      rules = _this.elements[Utils.getID($element)];
 
       // Do nothing if there are no rules defined for the input element
       if (!Array.isArray(rules)) {
@@ -66,51 +106,23 @@ define(['config', 'utils'], function (Config, Utils) {
         return;
       }
 
-      var inputValue = Utils.getValue($element);
+      inputValue = Utils.getValue($element);
       // Validate against all the rules
-      for (var i = 0; i < rules.length; i++) {
-        var isValid = checkIfValid(inputValue, rules[i]);
+      rules.forEach(function (rule) {
+        isValid = checkIfValid(inputValue, rule);
         if (isValid) {
           console.log('Valid!');
         }
         else {
-          console.log('Invalid with message: ' + rules[i].message);
+          console.log('Invalid with message: ' + rule.message);
         }
-      }
+      });
 
-      /**
-       * 'rule' is a user-defined object that specifies the rules for a given input element. it can follow 2 forms:
-       *    1. an object with properties 'type', 'message', and optionally 'regex'
-       *    2. an object with properties 'mustMatch' and 'message'
-       */
-      function checkIfValid(inputValue, rule) {
-        if (typeof rule.mustMatch === 'string') {
-          // Check if value actually matches
-          var otherElement = self.el.querySelector('#' + rule.mustMatch);
-          var otherElementValue = Utils.getValue(otherElement);
-          return (inputValue === otherElementValue);
-        }
-
-        var regExp = getRegExp(rule);
-        if (typeof regExp === 'undefined') {
-          return false;
-        }
-
-        return regExp.test(inputValue);
-      }
-
-      function getRegExp(rule) {
-        if (typeof rule.regex !== 'undefined') {
-          // User-defined regex exists
-          return rule.regex;
-        }
-        return regex[rule.type];
-      }
     },
 
     remove: function () {
       console.log(this);
-      this.el.removeEventListener('input', this.handleEvent.bind(this), true);
+      this.el.removeEventListener('input', this.handleEvent, true);
     }
 
   };
