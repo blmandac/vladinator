@@ -1,4 +1,4 @@
-define(['config'], function (Config) {
+define(['vlad_config'], function (Config) {
   /**
     @param {HTMLInput Element} $target - input field
 
@@ -6,6 +6,7 @@ define(['config'], function (Config) {
 
   */
   function buildPlaceholder ($target) {
+    console.log('building placeholder for ' + $target.id);
     $target.insertAdjacentHTML('afterend',
       '<div class="'+Config.placeholder_class+'" data-for="'+$target.id+'"></div>');
   }

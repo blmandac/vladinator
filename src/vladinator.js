@@ -1,4 +1,4 @@
-define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
+define(['vlad_config', 'vlad_utils', 'regexlib'], function (Config, Utils, RegExLib) {
   var config = Config,
       _this;
 
@@ -83,16 +83,17 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
     initialize: function () {
       var id,
           ruleTest;
-
-      _this.el = document.getElementById(this.selector);
-      _this.el.addEventListener('input', this.handleEvent, true);
-      _this.el.dataset.formState = false;
-
+      console.log('Initializing Vladinator');
+      console.log(Config);
+      this.el = document.getElementById(this.selector);
+      this.el.addEventListener('input', this.handleEvent, true);
+      this.el.dataset.formState = false;
+      console.log(this.el);
       //add error msg placeholders to each input element within el
-      Utils.turnToArray(_this.el.querySelectorAll('input'))
+      Array.prototype.slice.call(this.el.querySelectorAll('input'))
         .forEach(function (input) {
           id = Utils.getID(input);
-
+          console.log(id);
           //only initialize elements declared in intialization object
           if (_this.elements.hasOwnProperty(id)) {
 
