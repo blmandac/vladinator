@@ -6,6 +6,9 @@ define(['vladinator'], function (Vlad) {
 
   var vlad = new Vlad({
     el: 'form1',
+    onUpdate: function () {
+      console.log('State updated.');
+    },
     elements: {
       phoneNumber: [
         {

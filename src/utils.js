@@ -11,13 +11,14 @@ define(['config'], function (Config) {
   }
 
   function updatePlaceholder ($target, errMessage) {
-    var placeholder = document.querySelector('div[data-for="'+$target.id+'"]');
+    var placeholder = document.querySelector('[data-for="'+$target+'"]');
+    console.log($target);
     placeholder.innerHTML = errMessage;
   }
 
   function clearPlaceholder ($target) {
-    var placeholder = document.querySelector('div[data-for="'+$target.id+'"]');
-    placeholder.innerHTML = errMessage;
+    var placeholder = document.querySelector('[data-for="'+$target+'"]');
+    placeholder.innerHTML = '';
   }
 
   function getID($element) {
@@ -35,6 +36,9 @@ define(['config'], function (Config) {
   return {
     buildErrPlaceholder: function ($target) {
       buildPlaceholder($target);
+    },
+    updatePlaceholder: function ($target, errMessage) {
+      updatePlaceholder($target, errMessage);
     },
     getValue: function ($target) {
       return getValue($target);

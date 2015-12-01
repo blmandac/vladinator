@@ -9,9 +9,10 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
     //default to {} if options.elements is falsy
     this.elements = options.elements || {};
     this.elementStates = {};
-
+    this.onUpdate = options.onUpdate || undefined;
     //Describes the overall state of input fields in options.el
     this.formState = false; //default
+
     _this = this;
   }
 
@@ -38,7 +39,7 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
 
     if (rule.hasOwnProperty('mustMatch') && typeof rule.mustMatch === 'string') {
       // Check if value actually matches
-      otherElement = _this.el.querySelector('#' + rule.mustMatch);
+      otherElement      = _this.el.querySelector('#' + rule.mustMatch);
       otherElementValue = Utils.getValue(otherElement);
 
       return (inputValue === otherElementValue);
@@ -52,12 +53,32 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
     }
 
     return regExp.test(inputValue);
-    
+
+  }
+
+  function writeMessages ($elementID, arrMessages) {
+    var tmpStr = '';
+
+    arrMessages.forEach(function (msg) {
+      tmpStr+= msg+'\n';
+    });
+
+    Utils.updatePlaceholder($elementID, tmpStr);
+
+  }
+
+  function updateUI ($element, arrMessages) {
+    var state = $element.dataset.vstate;
+
+
+      writeMessages(Utils.getID($element), arrMessages);
+
+
   }
 
   Vladinator.prototype = {
     initialize: function () {
-
+      var id;
       _this.el = document.getElementById(this.selector);
       _this.el.addEventListener('input', this.handleEvent, true);
 
@@ -65,20 +86,60 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
       Utils.turnToArray(_this.el.querySelectorAll('input'))
         .forEach(function (input) {
           console.log(input);
+          id = Utils.getID(input);
 
-          Utils.buildErrPlaceholder(input);
+          //only initialize elements declared in intialization object
+          if (_this.elements.hasOwnProperty(id)) {
+            input.dataset.vstate = false;
+            Utils.buildErrPlaceholder(input);
+          }
+
         });
 
 
     },
 
-    handleEvent: function (event) {
-      console.log(event);
-      var $element,
-          rules,
-          inputValue,
-          isValid;
+    validate: function ($element) {
+      var rules,
+           id = Utils.getID($element),
+           inputValue,
+           states = [],
+           isValid,
+           messages = [];
 
+      //check if element is defined in lookup hash
+      if (_this.elements.hasOwnProperty(id)) {
+        rules = _this.elements[id];
+
+        // Do nothing if there are no rules defined for the input element
+        if (!Array.isArray(rules)) {
+          console.log('No rules defined for this input element');
+          return;
+        }
+
+        inputValue = Utils.getValue($element);
+
+        rules.forEach(function (rule) {
+          isValid = checkIfValid(inputValue, rule);
+          states.push(isValid);
+          $element.dataset.vstate = isValid;
+          if (!isValid) {
+            messages.push(rule.message);
+          }
+        });
+
+        updateUI($element, messages);
+
+      }
+
+    },
+
+    validateAll: function () {
+
+    },
+
+    handleEvent: function (event) {
+      var $element;
       // Only process events from <input> elements
       if (event.srcElement.nodeName !== 'INPUT' || event.type !== 'input') {
         console.log('Invalid event');
@@ -87,26 +148,7 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
 
       // $element is the <input> element responsible for firing the input event
       $element = event.srcElement;
-      rules = _this.elements[Utils.getID($element)];
-
-      // Do nothing if there are no rules defined for the input element
-      if (!Array.isArray(rules)) {
-        console.log('No rules defined for this input element');
-        return;
-      }
-
-      inputValue = Utils.getValue($element);
-
-      // Validate against all the rules
-      rules.forEach(function (rule) {
-        isValid = checkIfValid(inputValue, rule);
-        if (isValid) {
-          console.log('Valid!');
-        }
-        else {
-          console.log('Invalid with message: ' + rule.message);
-        }
-      });
+      _this.validate($element);
 
     },
 
