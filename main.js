@@ -1,13 +1,20 @@
 require.config({
-  baseUrl: 'src/'
+  baseUrl: '.',
+  paths: {
+    vladinator: '/dist/vladinator'
+  }
 });
 
 define(['vladinator'], function (Vlad) {
 
   var vlad = new Vlad({
     el: 'form1',
-    onUpdate: function () {
-      console.log('State updated.');
+    onFormValid: function () {
+      console.log('Form is Valid');
+    },
+    onFormInvalid: function () {
+      console.log('Form is Invalid');
+      console.log(this);
     },
     elements: {
       phoneNumber: [

@@ -4,12 +4,17 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
 
 
   function Vladinator (options) {
+
     this.selector = options.el;
     this.el = null; //initial value
     //default to {} if options.elements is falsy
     this.elements = options.elements || {};
     this.elementStates = {};
-    this.onUpdate = options.onUpdate || undefined;
+
+    //callbacks for form state changes
+    this.onFormValid = options.onFormValid || undefined;
+    this.onFormInvalid = options.onFormInvalid || undefined;
+
     //Describes the overall state of input fields in options.el
     this.formState = false; //default
 
@@ -70,37 +75,51 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
   function updateUI ($element, arrMessages) {
     var state = $element.dataset.vstate;
 
-
-      writeMessages(Utils.getID($element), arrMessages);
-
+    writeMessages(Utils.getID($element), arrMessages);
 
   }
 
   Vladinator.prototype = {
     initialize: function () {
-      var id;
+      var id,
+          ruleTest;
+
       _this.el = document.getElementById(this.selector);
       _this.el.addEventListener('input', this.handleEvent, true);
+      _this.el.dataset.formState = false;
 
       //add error msg placeholders to each input element within el
       Utils.turnToArray(_this.el.querySelectorAll('input'))
         .forEach(function (input) {
-          console.log(input);
           id = Utils.getID(input);
 
           //only initialize elements declared in intialization object
           if (_this.elements.hasOwnProperty(id)) {
+
+            input.className += ' '+config.input_class;
             input.dataset.vstate = false;
+            _this.elementStates[id] = false;
             Utils.buildErrPlaceholder(input);
+
+            //if element has a mustMatch rule (element must match the value of element idetified by)
+            //mustMatch value, set a property to target element to tell that it's a mustMatch target
+            //so that a two-way binding can be established between elements
+            ruleTest = _this.elements[id].filter(function (val){
+              return val.hasOwnProperty('mustMatch');
+            }).shift();
+
+            if (typeof ruleTest !== 'undefined') {
+              //console.log(ruleTest.mustMatch);
+              document.getElementById(ruleTest.mustMatch).dataset.matchTarget = id;
+            }
           }
 
         });
 
-
     },
 
     validate: function ($element) {
-      var rules,
+      var  rules,
            id = Utils.getID($element),
            inputValue,
            states = [],
@@ -129,12 +148,40 @@ define(['config', 'utils', 'regexlib'], function (Config, Utils, RegExLib) {
         });
 
         updateUI($element, messages);
+        this.validateForm();
+
+        if($element.dataset.hasOwnProperty('matchTarget')) {
+          _this.validate(document.getElementById($element.dataset.matchTarget));
+        }
 
       }
 
     },
+    /**
+      @function
+      Evaluates the overall state of the form based on their individual vstates
+    */
+    validateForm: function () {
+      var inputs = _this.el.getElementsByClassName(config.input_class);
+      var states = Utils.turnToArray(inputs).map(function (input) {
+        return input.dataset.vstate === 'false' ? false : true;
+      });
 
-    validateAll: function () {
+      _this.formState = states.every(function (state) {
+        return state;
+      });
+
+      _this.el.dataset.formState = _this.formState;
+
+      if (_this.formState) {
+        if (typeof _this.onFormValid === 'function') {
+          _this.onFormValid.call(this);
+        }
+      } else {
+        if (typeof _this.onFormInvalid === 'function') {
+          _this.onFormInvalid.call(this);
+        }
+      }
 
     },
 
